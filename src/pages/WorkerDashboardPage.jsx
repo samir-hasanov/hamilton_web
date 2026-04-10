@@ -35,7 +35,7 @@ import {
   FormControl,
   FormLabel,
   Textarea,
-  Select
+  Select,
 } from '@chakra-ui/react';
 import {
   FaTasks,
@@ -45,9 +45,8 @@ import {
   FaPlay,
   FaCheck,
   FaEye,
-  FaUserCircle,
   FaBell,
-  FaSignOutAlt
+  FaSignOutAlt,
 } from 'react-icons/fa';
 import Layout from '../layout/Layout';
 import authService from '../api_services/authService';
@@ -56,10 +55,13 @@ import companyService from '../api_services/companyService';
 import { useNavigate } from 'react-router-dom';
 import { formatDate, formatDateTime, isOverdue } from '../utils/dateUtils';
 import CurrencyConverter from '../components/CurrencyConverter';
+import { userDisplayName } from '../utils/userDisplayName';
+import HoverPreviewAvatar from '../components/HoverPreviewAvatar';
 
 const WorkerDashboardPage = () => {
   const navigate = useNavigate();
-  const user = authService.getCurrentUser();
+  const [user, setUser] = useState(() => authService.getCurrentUser());
+  const [welcomeAvatarUrl, setWelcomeAvatarUrl] = useState(null);
   const [myTasks, setMyTasks] = useState([]);
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
@@ -78,13 +80,55 @@ const WorkerDashboardPage = () => {
   const toast = useToast();
 
   useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        await authService.getMe();
+        if (!cancelled) setUser(authService.getCurrentUser());
+      } catch {
+        if (!cancelled) setUser(authService.getCurrentUser());
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
     if (!user) {
       navigate('/login');
       return;
     }
     loadMyTasks();
     loadMyCompanies();
-  }, [navigate, page, size]);
+  }, [navigate, page, size, user?.username]);
+
+  useEffect(() => {
+    if (!user?.profileImagePresent) {
+      setWelcomeAvatarUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const url = await authService.fetchProfileAvatarObjectUrl();
+        if (cancelled || !url) return;
+        setWelcomeAvatarUrl((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return url;
+        });
+      } catch {
+        if (!cancelled) {
+          setWelcomeAvatarUrl((prev) => {
+            if (prev) URL.revokeObjectURL(prev);
+            return null;
+          });
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.profileImagePresent, user?.username]);
 
   const loadMyTasks = async () => {
     try {
@@ -273,14 +317,27 @@ const WorkerDashboardPage = () => {
           {/* Header */ }
           <Box>
             <HStack justify="space-between" align="center">
-              <VStack align="start" spacing={ 2 }>
-                <Heading size="lg" color="gray.700">
-                  Xoş gəlmisiniz, { user.username }!
-                </Heading>
-                <Text color="gray.500">
-                  Sizin iş masanız - təyin edilən tapşırıqları idarə edin
-                </Text>
-              </VStack>
+              <HStack align="center" spacing={ 4 }>
+                <HoverPreviewAvatar
+                  size="lg"
+                  src={ welcomeAvatarUrl || undefined }
+                  name={ userDisplayName(user) }
+                  onError={ () => {
+                    setWelcomeAvatarUrl((prev) => {
+                      if (prev) URL.revokeObjectURL(prev);
+                      return null;
+                    });
+                  } }
+                />
+                <VStack align="start" spacing={ 2 }>
+                  <Heading size="lg" color="gray.700">
+                    Xoş gəlmisiniz, { userDisplayName(user) }!
+                  </Heading>
+                  <Text color="gray.500">
+                    Sizin iş masanız · { user.username }
+                  </Text>
+                </VStack>
+              </HStack>
               <HStack spacing={ 4 }>
                 <CurrencyConverter />
                 <Button
@@ -289,13 +346,6 @@ const WorkerDashboardPage = () => {
                   colorScheme="blue"
                 >
                   Bildirişlər
-                </Button>
-                <Button
-                  leftIcon={ <Icon as={ FaUserCircle } /> }
-                  variant="ghost"
-                  colorScheme="blue"
-                >
-                  Profil
                 </Button>
                 <Button
                   onClick={ handleLogout }

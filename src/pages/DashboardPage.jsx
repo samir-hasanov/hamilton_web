@@ -17,7 +17,7 @@ import {
   StatLabel,
   StatNumber,
   StatHelpText,
-  StatArrow
+  StatArrow,
 } from '@chakra-ui/react';
 import { 
   FaUsers, 
@@ -26,7 +26,6 @@ import {
   FaBell,
   FaPlus,
   FaBuilding,
-  FaUserCircle,
   FaTasks,
   FaCheckCircle,
   FaClock,
@@ -40,10 +39,13 @@ import notificationService from '../api_services/notificationService';
 import { useNavigate } from 'react-router-dom';
 import reportService from '../api_services/reportService';
 import CurrencyConverter from '../components/CurrencyConverter';
+import { userDisplayName } from '../utils/userDisplayName';
+import HoverPreviewAvatar from '../components/HoverPreviewAvatar';
 
 const DashboardPage = () => {
   const navigate = useNavigate();
-  const user = authService.getCurrentUser();
+  const [user, setUser] = useState(() => authService.getCurrentUser());
+  const [welcomeAvatarUrl, setWelcomeAvatarUrl] = useState(null);
   // Performance charts state
   const [performanceData, setPerformanceData] = useState([]);
   const [stats, setStats] = useState({
@@ -67,6 +69,7 @@ const DashboardPage = () => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [serverNotifications, setServerNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [markingAllRead, setMarkingAllRead] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -80,6 +83,49 @@ const DashboardPage = () => {
     const nid = setInterval(() => { fetchUnreadCount(); fetchNotifications(); }, 60000);
     return () => { clearInterval(id); clearInterval(nid); };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        await authService.getMe();
+        if (cancelled) return;
+        setUser(authService.getCurrentUser());
+      } catch {
+        if (!cancelled) setUser(authService.getCurrentUser());
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (!user?.profileImagePresent) {
+      setWelcomeAvatarUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const url = await authService.fetchProfileAvatarObjectUrl();
+        if (cancelled || !url) return;
+        setWelcomeAvatarUrl((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return url;
+        });
+      } catch {
+        if (!cancelled) {
+          setWelcomeAvatarUrl((prev) => {
+            if (prev) URL.revokeObjectURL(prev);
+            return null;
+          });
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.profileImagePresent, user?.username]);
 
   const loadDashboardData = async () => {
     try {
@@ -129,11 +175,22 @@ const DashboardPage = () => {
     }
   };
 
-  const markAllRead = () => {
+  const markAllRead = async () => {
+    setMarkingAllRead(true);
     setUnreadIds([]);
     localStorage.setItem('overdueUnreadIds', JSON.stringify([]));
-    // serverdə oxundu işarələ
-    notificationService.markAllRead().then(() => setUnreadCount(0)).catch(() => {});
+    try {
+      // serverdə oxundu işarələ
+      await notificationService.markAllRead();
+      setUnreadCount(0);
+      // UI-da dərhal yenilə ki istifadəçi nəticəni görsün
+      setServerNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      await fetchNotifications();
+    } catch (_) {
+      // ignore
+    } finally {
+      setMarkingAllRead(false);
+    }
   };
 
   const fetchUnreadCount = async () => {
@@ -179,20 +236,33 @@ const DashboardPage = () => {
           {/* Header */}
           <Box>
             <HStack justify="space-between" align="center">
-              <VStack align="start" spacing={2}>
-                <Heading size="lg" color="gray.700">
-                  Xoş gəlmisiniz, {user.username}!
-                </Heading>
-                <Text color="gray.500">
-                  Hamilton sisteminin idarəetmə paneli
-                </Text>
-              </VStack>
+              <HStack align="center" spacing={4}>
+                <HoverPreviewAvatar
+                  size="lg"
+                  src={welcomeAvatarUrl || undefined}
+                  name={userDisplayName(user)}
+                  onError={() => {
+                    setWelcomeAvatarUrl((prev) => {
+                      if (prev) URL.revokeObjectURL(prev);
+                      return null;
+                    });
+                  }}
+                />
+                <VStack align="start" spacing={2}>
+                  <Heading size="lg" color="gray.700">
+                    Xoş gəlmisiniz, {userDisplayName(user)}!
+                  </Heading>
+                  <Text color="gray.500">
+                    Hamilton sisteminin idarəetmə paneli · {user.username}
+                  </Text>
+                </VStack>
+              </HStack>
               <HStack spacing={4}>
                 <CurrencyConverter />
                 <Button
                   variant="ghost"
                   colorScheme="blue"
-                  onClick={() => { setIsNotifOpen(true); markAllRead(); }}
+                  onClick={() => { setIsNotifOpen(true); }}
                 >
                   <HStack>
                     <Box position="relative">
@@ -205,13 +275,6 @@ const DashboardPage = () => {
                     </Box>
                     <Text>Bildirişlər</Text>
                   </HStack>
-                </Button>
-                <Button
-                  leftIcon={<Icon as={FaUserCircle} />}
-                  variant="ghost"
-                  colorScheme="blue"
-                >
-                  Profil
                 </Button>
                 <Button
                   onClick={handleLogout}
@@ -476,9 +539,11 @@ const DashboardPage = () => {
                 )
               )}
             </VStack>
-            {overdueList.length > 0 && (
+            {(serverNotifications.length > 0 || overdueList.length > 0) && (
               <HStack justify="flex-end" mt={4}>
-                <Button size="sm" variant="outline" onClick={markAllRead}>Hamısını oxundu işarələ</Button>
+                <Button size="sm" variant="outline" onClick={markAllRead} isLoading={markingAllRead}>
+                  Hamısını oxundu işarələ
+                </Button>
               </HStack>
             )}
           </Box>
