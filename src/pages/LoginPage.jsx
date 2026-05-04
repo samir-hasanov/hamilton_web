@@ -10,6 +10,7 @@ import {
   Container,
   Flex,
   Icon,
+  Image,
   // Link,
   Card,
   CardBody,
@@ -25,7 +26,6 @@ import {
   FaEyeSlash,
   // FaGoogle, 
   // FaGithub,
-  FaBuilding,
   FaTrash
 } from 'react-icons/fa';
 import authService from '../api_services/authService';
@@ -136,8 +136,12 @@ const LoginPage = () => {
   return (
     <Box
       minH="100vh"
-      bg="gray.50"
-      backgroundImage="linear-gradient(135deg,rgb(148, 192, 225) 0%,rgb(171, 220, 240) 100%)"
+      bg="gray.900"
+      backgroundImage="
+        radial-gradient(ellipse 120% 80% at 20% -10%, rgba(45, 212, 191, 0.22), transparent 55%),
+        radial-gradient(ellipse 90% 60% at 100% 0%, rgba(59, 130, 246, 0.18), transparent 45%),
+        linear-gradient(160deg, #0f172a 0%, #1e293b 38%, #0f172a 100%)
+      "
       py={ 10 }
     >
       <Container maxW="lg">
@@ -180,29 +184,64 @@ const LoginPage = () => {
           <Card
             bg="white"
             border="1px"
-            borderColor="gray.200"
-            shadow="xl"
+            borderColor="gray.100"
+            shadow="0 25px 50px -12px rgba(0, 0, 0, 0.45), 0 0 1px rgba(255,255,255,0.08)"
             borderRadius="xl"
             overflow="hidden"
+            borderTopWidth="4px"
+            borderTopStyle="solid"
+            borderTopColor="teal.500"
             _hover={ {
               transform: 'translateY(-2px)',
-              boxShadow: '2xl'
+              boxShadow: '0 32px 64px -12px rgba(0, 0, 0, 0.5), 0 0 1px rgba(45,212,191,0.15)'
             } }
             transition="all 0.3s ease"
           >
-            <CardHeader textAlign="center" pb={ 0 }>
+            <CardHeader textAlign="center" pb={ 0 } pt={ 8 } px={ 8 }>
               <Flex justify="center" mb={ 4 }>
-                <Icon as={ FaBuilding } w={ 8 } h={ 8 } color="blue.500" />
+                <Box
+                  p={ 2 }
+                  borderRadius="2xl"
+                  bg="linear-gradient(145deg, rgba(240,253,250,1) 0%, rgba(204,251,241,0.6) 100%)"
+                  boxShadow="inner 0 1px 0 rgba(255,255,255,0.85)"
+                >
+                  <Image
+                    src={ `${ process.env.PUBLIC_URL || '' }/icons/culture-team.png` }
+                    alt="Hamilton Finance"
+                    w="88px"
+                    h="88px"
+                    objectFit="contain"
+                  />
+                </Box>
               </Flex>
-              <Heading size="lg" color="gray.700">
-                Hamilton Consulting
-              </Heading>
-              <Text color="gray.500" mt={ 2 }>
-                Enter your details to log in to your account.
-              </Text>
+              <VStack spacing={ 1 }>
+                <Text
+                  fontSize="xs"
+                  fontWeight="semibold"
+                  letterSpacing="0.28em"
+                  textTransform="uppercase"
+                  color="teal.600"
+                >
+                  Maliyyə platforması
+                </Text>
+                <Heading size="xl" letterSpacing="-0.02em" color="gray.800" fontWeight="800">
+                  Hamilton
+                  { ' ' }
+                  <Text
+                    as="span"
+                    bgGradient="linear(to-r, teal.600, cyan.700)"
+                    bgClip="text"
+                  >
+                    Finance
+                  </Text>
+                </Heading>
+                <Text color="gray.500" mt={ 2 } fontSize="sm" maxW="sm" mx="auto">
+                  Şəxsi hesabınıza daxil olmaq üçün istifadəçi adı və şifrənizi daxil edin.
+                </Text>
+              </VStack>
             </CardHeader>
 
-            <CardBody pt={ 6 }>
+            <CardBody pt={ 8 } px={ 8 } pb={ 10 }>
               <form onSubmit={ handleSubmit }>
                 <VStack spacing={ 6 }>
                   <Box width="full">
@@ -218,8 +257,8 @@ const LoginPage = () => {
                       borderRadius="md"
                       borderColor="gray.200"
                       _focus={ {
-                        borderColor: 'blue.500',
-                        boxShadow: '0 0 0 1px #3182ce'
+                        borderColor: 'teal.500',
+                        boxShadow: '0 0 0 1px #319795'
                       } }
                       required
                     />
@@ -240,8 +279,8 @@ const LoginPage = () => {
                         borderRadius="md"
                         borderColor="gray.200"
                         _focus={ {
-                          borderColor: 'blue.500',
-                          boxShadow: '0 0 0 1px #3182ce'
+                          borderColor: 'teal.500',
+                          boxShadow: '0 0 0 1px #319795'
                         } }
                         required
                       />
@@ -258,7 +297,7 @@ const LoginPage = () => {
 
                   <Button
                     type="submit"
-                    colorScheme="blue"
+                    colorScheme="teal"
                     size="lg"
                     width="full"
                     isLoading={ isLoading }
