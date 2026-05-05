@@ -1,6 +1,5 @@
 import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:8085/api/v1';
+import { API_BASE_URL } from '../config/apiConfig';
 
 // Request interceptor - token-lər authService-də əlavə olunur
 axios.interceptors.request.use(

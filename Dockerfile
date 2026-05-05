@@ -4,6 +4,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install --legacy-peer-deps
 COPY . .
+ARG REACT_APP_API_BASE=/api/v1
+ENV REACT_APP_API_BASE=$REACT_APP_API_BASE
 RUN npm run build
 
 # Production mərhələsi

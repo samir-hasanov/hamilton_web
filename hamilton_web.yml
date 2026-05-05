@@ -1,0 +1,57 @@
+# Front şəkli: registry-dən; lokal minikube üçün image: hamilton-web:latest, imagePullPolicy: Never
+# Quruluş: REACT_APP_API_BASE=/api/v1 ilə build; Nginx /api/ → hamilton-backend:8085/api/
+#
+# Minikube URL:
+#   minikube service hamilton-web -n hamilton --url
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hamilton-web
+  namespace: hamilton
+  labels:
+    app: hamilton-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hamilton-web
+  template:
+    metadata:
+      labels:
+        app: hamilton-web
+    spec:
+      containers:
+        - name: web
+          image: ghcr.io/samir-hasanov/hamilton-web:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hamilton-web
+  namespace: hamilton
+spec:
+  type: NodePort
+  selector:
+    app: hamilton-web
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      # nodePort: 30080  # sabit port istəsəniz, şərhi açın

@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { isTokenExpired, clearExpiredTokens, setupTokenCleanup } from '../utils/tokenUtils';
-
-const API_BASE_URL = 'http://localhost:8085/api/v1';
+import { API_BASE_URL } from '../config/apiConfig';
 
 function notifyUserCacheUpdated() {
   try {
