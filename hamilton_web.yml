@@ -1,33 +1,36 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: react-frontend
+  name: hamilton-web
+  namespace: hamilton
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: react-frontend
+      app: hamilton-web
   template:
     metadata:
       labels:
-        app: react-frontend
+        app: hamilton-web
     spec:
       containers:
-        - name: react-frontend
-          image: samirhasanov/hamilton_web:latest
-          imagePullPolicy: Always # <--- bu sətir əlavə edildi
+        - name: hamilton-web
+          image: samirhasanov/hamilton-web:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: react-frontend-service
+  name: hamilton-web
+  namespace: hamilton
 spec:
-  type: LoadBalancer
+  type: NodePort
   selector:
-    app: react-frontend
+    app: hamilton-web
   ports:
     - protocol: TCP
       port: 80
       targetPort: 80
+      nodePort: 30080
