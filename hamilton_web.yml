@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: hamilton-web
-          image: samirhasanov/hamilton-web:latest
+          image: samirhasanov/hamilton_web:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 80
