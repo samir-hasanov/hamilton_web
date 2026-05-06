@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: react-frontend
-          image: samirhasanov/qr_web:latest
+          image: samirhasanov/hamilton_web:latest
           imagePullPolicy: Always # <--- bu sətir əlavə edildi
           ports:
             - containerPort: 80
