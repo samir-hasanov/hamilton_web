@@ -10,6 +10,7 @@ import {
   Container,
   Flex,
   Icon,
+  Image,
   // Link,
   Card,
   CardBody,
@@ -192,7 +193,12 @@ const LoginPage = () => {
           >
             <CardHeader textAlign="center" pb={ 0 }>
               <Flex justify="center" mb={ 4 }>
-                <Icon as={ FaBuilding } w={ 8 } h={ 8 } color="blue.500" />
+                <Image
+                  src="/icons/culture-team.png"
+                  alt="Hamilton"
+                  boxSize="56px"
+                  objectFit="contain"
+                />
               </Flex>
               <Heading size="lg" color="gray.700">
                 Hamilton Consulting
